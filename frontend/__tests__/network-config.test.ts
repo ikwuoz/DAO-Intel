@@ -14,13 +14,20 @@ describe("GenLayer network configuration", () => {
       id: studioDevnet.id,
       name: "GenLayer Studio Next",
       rpcUrls: { default: { http: ["https://studio-next.genlayer.com/api"] } },
+      blockExplorers: {
+        default: { url: "https://explorer-studio-dev.genlayer.com/" },
+      },
     });
     expect(GENLAYER_CHAIN_ID).toBe(studioDevnet.id);
-    expect(GENLAYER_CHAIN_ID_HEX).toBe(`0x${studioDevnet.id.toString(16).toUpperCase()}`);
+    expect(GENLAYER_CHAIN_ID_HEX).toBe(`0x${studioDevnet.id.toString(16).toLowerCase()}`);
+    // Wallet chain IDs must be lowercase EIP-695 hex — MetaMask rejects
+    // uppercase with "Unrecognized chain ID".
+    expect(GENLAYER_CHAIN_ID_HEX).toMatch(/^0x[0-9a-f]+$/);
     expect(GENLAYER_NETWORK).toMatchObject({
       chainId: GENLAYER_CHAIN_ID_HEX,
       chainName: GENLAYER_CHAIN.name,
       rpcUrls: [...GENLAYER_CHAIN.rpcUrls.default.http],
+      blockExplorerUrls: ["https://explorer-studio-dev.genlayer.com/"],
     });
   });
 
@@ -40,6 +47,7 @@ describe("GenLayer network configuration", () => {
       chainName: chain.name,
       rpcUrls: [...chain.rpcUrls.default.http],
       nativeCurrency: chain.nativeCurrency,
+      blockExplorerUrls: ["https://explorer-studio-dev.genlayer.com/"],
     });
   });
 

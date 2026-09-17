@@ -9,6 +9,7 @@ import {
   getCurrentChainId,
   isOnGenLayerNetwork,
   getEthereumProvider,
+  switchToGenLayerNetwork,
   GENLAYER_CHAIN_ID,
 } from "./client";
 import { error, userRejected, warning } from "../utils/toast";
@@ -29,6 +30,7 @@ interface WalletContextValue extends WalletState {
   connectWallet: () => Promise<string>;
   disconnectWallet: () => void;
   switchWalletAccount: () => Promise<string>;
+  switchWalletNetwork: () => Promise<void>;
 }
 
 // Create context with undefined default (will error if used outside Provider)
@@ -181,15 +183,15 @@ export function WalletProvider({ children }: { children: ReactNode }) {
   }, []);
 
   /**
-   * Connect to MetaMask
+   * Connect to MetaMask (auto-switches to GenLayer; a dismissed switch
+   * prompt keeps the connection and surfaces the wrong-network state).
    */
   const connectWallet = useCallback(async () => {
     try {
       setState((prev) => ({ ...prev, isLoading: true }));
 
-      const address = await connectMetaMask();
+      const { address, onCorrectNetwork, networkResult } = await connectMetaMask();
       const chainId = await getCurrentChainId();
-      const correctNetwork = await isOnGenLayerNetwork();
 
       // User is connecting, clear the disconnect flag
       // This allows auto-reconnect on future page loads
@@ -203,8 +205,14 @@ export function WalletProvider({ children }: { children: ReactNode }) {
         isConnected: true,
         isLoading: false,
         isMetaMaskInstalled: true,
-        isOnCorrectNetwork: correctNetwork,
+        isOnCorrectNetwork: onCorrectNetwork,
       });
+
+      if (!onCorrectNetwork && networkResult === "rejected") {
+        warning("Connected on the wrong network", {
+          description: "Switch to the GenLayer network to interact with contracts.",
+        });
+      }
 
       return address;
     } catch (err: any) {
@@ -299,11 +307,35 @@ export function WalletProvider({ children }: { children: ReactNode }) {
     }
   }, []);
 
+  /**
+   * Explicitly switch to the GenLayer network (wrong-network button).
+   * Unlike the connect-time auto-switch, a dismissal here surfaces as a
+   * cancellation toast since the user asked for it directly.
+   */
+  const switchWalletNetwork = useCallback(async () => {
+    try {
+      await switchToGenLayerNetwork();
+      const chainId = await getCurrentChainId();
+      const correctNetwork = await isOnGenLayerNetwork();
+      setState((prev) => ({ ...prev, chainId, isOnCorrectNetwork: correctNetwork }));
+    } catch (err: any) {
+      if (err.message?.includes("rejected")) {
+        userRejected("Network switch cancelled");
+      } else {
+        error("Failed to switch network", {
+          description: err.message || "Please try again.",
+        });
+      }
+      throw err;
+    }
+  }, []);
+
   const value: WalletContextValue = {
     ...state,
     connectWallet,
     disconnectWallet,
     switchWalletAccount,
+    switchWalletNetwork,
   };
 
   return <WalletContext.Provider value={value}>{children}</WalletContext.Provider>;

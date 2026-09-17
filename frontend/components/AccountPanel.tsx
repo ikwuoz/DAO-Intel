@@ -3,7 +3,6 @@
 import { useState } from "react";
 import { User, LogOut, AlertCircle, ExternalLink } from "lucide-react";
 import { useWallet } from "@/lib/genlayer/wallet";
-import { usePlayerPoints } from "@/lib/hooks/useFootballBets";
 import { success, error, userRejected } from "@/lib/utils/toast";
 import { AddressDisplay } from "./AddressDisplay";
 import { Button } from "./ui/button";
@@ -29,14 +28,14 @@ export function AccountPanel() {
     connectWallet,
     disconnectWallet,
     switchWalletAccount,
+    switchWalletNetwork,
   } = useWallet();
-
-  const { data: points = 0 } = usePlayerPoints(address);
 
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [connectionError, setConnectionError] = useState("");
   const [isConnecting, setIsConnecting] = useState(false);
   const [isSwitching, setIsSwitching] = useState(false);
+  const [isSwitchingNetwork, setIsSwitchingNetwork] = useState(false);
 
   const handleConnect = async () => {
     if (!isMetaMaskInstalled) {
@@ -92,6 +91,22 @@ export function AccountPanel() {
     }
   };
 
+  const handleSwitchNetwork = async () => {
+    try {
+      setIsSwitchingNetwork(true);
+      setConnectionError("");
+      await switchWalletNetwork();
+    } catch (err: any) {
+      // Dismissals already surface a toast in the provider; only show
+      // unexpected errors inline.
+      if (!err.message?.includes("rejected")) {
+        setConnectionError(err.message || "Failed to switch network");
+      }
+    } finally {
+      setIsSwitchingNetwork(false);
+    }
+  };
+
   // Not connected state
   if (!isConnected) {
     return (
@@ -108,7 +123,7 @@ export function AccountPanel() {
               Connect to GenLayer
             </DialogTitle>
             <DialogDescription>
-              Connect your MetaMask wallet to start betting
+              Connect your MetaMask wallet to participate in DAO governance
             </DialogDescription>
           </DialogHeader>
 
@@ -187,11 +202,19 @@ export function AccountPanel() {
             <User className="w-4 h-4 text-accent" />
             <AddressDisplay address={address} maxLength={12} />
           </div>
-          <div className="h-4 w-px bg-white/10" />
-          <div className="flex items-center gap-1">
-            <span className="text-sm font-semibold text-accent">{points}</span>
-            <span className="text-xs text-muted-foreground">pts</span>
-          </div>
+          {!isOnCorrectNetwork && (
+            <>
+              <div className="h-4 w-px bg-white/10" />
+              <Button
+                variant="gradient"
+                size="sm"
+                onClick={handleSwitchNetwork}
+                disabled={isSwitchingNetwork || isLoading}
+              >
+                {isSwitchingNetwork ? "Switching..." : "Switch to GenLayer"}
+              </Button>
+            </>
+          )}
         </div>
 
         <DialogTrigger asChild>
@@ -215,11 +238,6 @@ export function AccountPanel() {
           <div className="brand-card p-4 space-y-2">
             <p className="text-sm text-muted-foreground">Your Address</p>
             <code className="text-sm font-mono break-all">{address}</code>
-          </div>
-
-          <div className="brand-card p-4 space-y-2">
-            <p className="text-sm text-muted-foreground">Your Points</p>
-            <p className="text-2xl font-bold text-accent">{points}</p>
           </div>
 
           <div className="brand-card p-4 space-y-2">
@@ -248,6 +266,14 @@ export function AccountPanel() {
                 You&apos;re not on the GenLayer network. Please switch networks in
                 MetaMask or try reconnecting.
               </AlertDescription>
+              <Button
+                onClick={handleSwitchNetwork}
+                variant="gradient"
+                className="w-full mt-3"
+                disabled={isSwitchingNetwork || isLoading}
+              >
+                {isSwitchingNetwork ? "Switching..." : "Switch to GenLayer"}
+              </Button>
             </Alert>
           )}
 

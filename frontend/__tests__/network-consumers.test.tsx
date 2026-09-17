@@ -20,9 +20,11 @@ vi.mock("@genlayer/transaction-kit", async (importOriginal) => ({
   createTransactionKit: mocks.createTransactionKit,
 }));
 
-import FootballBets from "../lib/contracts/FootballBets";
+import SnapshotEvaluator from "../lib/contracts/SnapshotEvaluator";
 import {
   addGenLayerNetwork,
+  connectMetaMask,
+  ensureGenLayerNetwork,
   switchToGenLayerNetwork,
 } from "../lib/genlayer/client";
 import { useTransactionKit } from "../lib/genlayer/kit";
@@ -46,7 +48,7 @@ describe("network consumers", () => {
   });
 
   it("uses the shared chain for contract clients", () => {
-    const contract = new FootballBets(account, account);
+    const contract = new SnapshotEvaluator(account, account);
 
     expect(mocks.createClient).toHaveBeenLastCalledWith({
       account,
@@ -94,6 +96,110 @@ describe("network consumers", () => {
     expect(providerRequest).toHaveBeenCalledWith({
       method: "wallet_addEthereumChain",
       params: [GENLAYER_NETWORK],
+    });
+  });
+
+  describe("auto-switch on connect", () => {
+    const reject401 = () => {
+      const err: any = new Error("User rejected the request");
+      err.code = 4001;
+      throw err;
+    };
+
+    beforeEach(() => {
+      (window as any).ethereum.isMetaMask = true;
+    });
+
+    it("ensureGenLayerNetwork returns already without prompting", async () => {
+      providerRequest.mockImplementation(async ({ method }: any) => {
+        if (method === "eth_chainId") return GENLAYER_CHAIN_ID_HEX;
+        throw new Error(`unexpected ${method}`);
+      });
+
+      expect(await ensureGenLayerNetwork()).toBe("already");
+      expect(providerRequest).not.toHaveBeenCalledWith(
+        expect.objectContaining({ method: "wallet_switchEthereumChain" })
+      );
+    });
+
+    it("ensureGenLayerNetwork switches when on the wrong network", async () => {
+      let switched = false;
+      providerRequest.mockImplementation(async ({ method }: any) => {
+        if (method === "eth_chainId") {
+          return switched ? GENLAYER_CHAIN_ID_HEX : "0x1";
+        }
+        if (method === "wallet_switchEthereumChain") {
+          switched = true;
+          return null;
+        }
+        throw new Error(`unexpected ${method}`);
+      });
+
+      expect(await ensureGenLayerNetwork()).toBe("switched");
+    });
+
+    it("ensureGenLayerNetwork returns rejected instead of throwing", async () => {
+      providerRequest.mockImplementation(async ({ method }: any) => {
+        if (method === "eth_chainId") return "0x1";
+        if (method === "wallet_switchEthereumChain") reject401();
+        throw new Error(`unexpected ${method}`);
+      });
+
+      expect(await ensureGenLayerNetwork()).toBe("rejected");
+    });
+
+    it("falls back to adding the chain on unrecognized-chain errors", async () => {
+      let added = false;
+      providerRequest.mockImplementation(async ({ method }: any) => {
+        if (method === "eth_chainId") {
+          return added ? GENLAYER_CHAIN_ID_HEX : "0x1";
+        }
+        if (method === "wallet_switchEthereumChain") {
+          throw new Error(
+            'Unrecognized chain ID "0xF22D". Try adding the chain using wallet_addEthereumChain first.'
+          );
+        }
+        if (method === "wallet_addEthereumChain") {
+          added = true;
+          return null;
+        }
+        throw new Error(`unexpected ${method}`);
+      });
+
+      expect(await ensureGenLayerNetwork()).toBe("switched");
+      expect(providerRequest).toHaveBeenCalledWith({
+        method: "wallet_addEthereumChain",
+        params: [GENLAYER_NETWORK],
+      });
+    });
+
+    it("connectMetaMask still connects when the switch is dismissed", async () => {
+      providerRequest.mockImplementation(async ({ method }: any) => {
+        if (method === "eth_requestAccounts") return [account];
+        if (method === "eth_chainId") return "0x1";
+        if (method === "wallet_switchEthereumChain") reject401();
+        throw new Error(`unexpected ${method}`);
+      });
+
+      const result = await connectMetaMask();
+      expect(result.address).toBe(account);
+      expect(result.onCorrectNetwork).toBe(false);
+      expect(result.networkResult).toBe("rejected");
+    });
+
+    it("connectMetaMask reports a correct network when already there", async () => {
+      providerRequest.mockImplementation(async ({ method }: any) => {
+        if (method === "eth_requestAccounts") return [account];
+        if (method === "eth_chainId") return GENLAYER_CHAIN_ID_HEX;
+        throw new Error(`unexpected ${method}`);
+      });
+
+      const result = await connectMetaMask();
+      expect(result).toEqual({
+        address: account,
+        onCorrectNetwork: true,
+        networkResult: "already",
+      });
     });
   });
 });

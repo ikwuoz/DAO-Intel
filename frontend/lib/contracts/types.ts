@@ -1,23 +1,48 @@
 /**
- * TypeScript types for GenLayer Football Betting contract
+ * TypeScript types for the Snapshot DAO stack contracts
  */
 
-export interface Bet {
-  id: string;
-  game_date: string;
-  team1: string;
-  team2: string;
-  predicted_winner: string;
-  has_resolved: boolean;
-  real_winner?: string;
-  real_score?: string;
-  resolution_url?: string;
-  owner: string;
+export type ProposalVerdict = "APPROVE" | "REJECT" | "NEEDS_REVISION";
+
+export interface ProposalEvaluation {
+  proposal_id: string;
+  verdict: ProposalVerdict;
+  is_spam: boolean;
+  clarity: number;
+  alignment: number;
+  feasibility: number;
+  overall: number;
+  analysis: string;
 }
 
-export interface LeaderboardEntry {
-  address: string;
-  points: number;
+export interface VoteRecommendation {
+  proposal_id: string;
+  choice_index: number;
+  choice_label: string;
+  confidence: number;
+  reasoning: string;
+}
+
+export type SpendStatus = "PENDING" | "RELEASED" | "CANCELLED";
+
+export interface Spend {
+  spend_id: string;
+  space_id: string;
+  proposal_id: string;
+  beneficiary: string;
+  amount: number;
+  milestone: string;
+  status: SpendStatus;
+  proposer: string;
+  evaluator_verdict: ProposalVerdict;
+  evaluator_overall: number;
+}
+
+export interface TreasuryState {
+  total_deposited: number;
+  total_released: number;
+  available: number;
+  min_overall: number;
 }
 
 export interface TransactionReceipt {
@@ -25,9 +50,4 @@ export interface TransactionReceipt {
   hash: string;
   blockNumber?: number;
   [key: string]: any;
-}
-
-export interface BetFilters {
-  resolved?: boolean;
-  owner?: string;
 }

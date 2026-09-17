@@ -1,7 +1,7 @@
 {
-  "name": "GenLayer Football Market",
-  "short_name": "GenLayer Market",
-  "description": "AI-powered football match predictions on GenLayer blockchain",
+  "name": "GenLayer DAO Intel",
+  "short_name": "DAO Intel",
+  "description": "Verifiable Snapshot proposal evaluation, voting delegates, and treasury guards on GenLayer",
   "start_url": "/",
   "display": "standalone",
   "background_color": "#000000",

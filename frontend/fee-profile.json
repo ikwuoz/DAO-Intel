@@ -1,19 +1,41 @@
 {
   "version": 1,
-  "network": "localnet",
-  "measuredAt": "2026-06-15T17:26:36Z",
+  "network": "studio_devnet",
+  "measuredAt": "2026-09-17T00:38:55Z",
+  "chainId": 61997,
   "deploy": {
-    "leaderTimeunitsAllocation": "125",
-    "validatorTimeunitsAllocation": "250",
-    "executionBudgetPerRound": "786434",
+    "leaderTimeunitsAllocation": "313",
+    "validatorTimeunitsAllocation": "625",
+    "executionBudgetPerRound": "98405625000000",
     "totalMessageFees": "0",
     "rotationsPerRound": "1"
   },
   "methods": {
-    "create_bet": {
+    "create_spend": {
+      "leaderTimeunitsAllocation": "313",
+      "validatorTimeunitsAllocation": "625",
+      "executionBudgetPerRound": "0",
+      "totalMessageFees": "0",
+      "rotationsPerRound": "1"
+    },
+    "deposit": {
+      "leaderTimeunitsAllocation": "313",
+      "validatorTimeunitsAllocation": "625",
+      "executionBudgetPerRound": "0",
+      "totalMessageFees": "0",
+      "rotationsPerRound": "1"
+    },
+    "release_spend": {
       "leaderTimeunitsAllocation": "125",
       "validatorTimeunitsAllocation": "250",
-      "executionBudgetPerRound": "786297",
+      "executionBudgetPerRound": "159805000000000",
+      "totalMessageFees": "0",
+      "rotationsPerRound": "3"
+    },
+    "set_charter": {
+      "leaderTimeunitsAllocation": "313",
+      "validatorTimeunitsAllocation": "625",
+      "executionBudgetPerRound": "98288125000000",
       "totalMessageFees": "0",
       "rotationsPerRound": "1"
     }

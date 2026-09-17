@@ -13,14 +13,16 @@ interface AddressDisplayProps {
 }
 
 /**
- * Component to display shortened blockchain addresses with tooltip
+ * Component to display shortened blockchain addresses with tooltip.
+ * Clicking the address copies the full address by default (copy icon
+ * shown unless showCopy is explicitly false).
  * Ported from Vue Address.vue component
  */
 export function AddressDisplay({
   address,
   maxLength = 12,
   className = "",
-  showCopy = false,
+  showCopy = true,
 }: AddressDisplayProps) {
   const [copied, setCopied] = useState(false);
 
@@ -47,22 +49,21 @@ export function AddressDisplay({
 
   return (
     <span
-      className={`inline-flex items-center gap-1 ${className}`}
-      title={address}
+      className={`inline-flex items-center gap-1 cursor-pointer ${className}`}
+      title={`${address} (click to copy)`}
+      onClick={handleCopy}
+      role="button"
+      aria-label={`Copy address ${address}`}
     >
       <span className="font-mono">{shortened}</span>
       {showCopy && (
-        <button
-          onClick={handleCopy}
-          className="opacity-50 hover:opacity-100 transition-opacity p-0.5 hover:bg-white/5 rounded"
-          aria-label="Copy address"
-        >
+        <span className="opacity-50 p-0.5" aria-hidden="true">
           {copied ? (
             <Check className="w-3.5 h-3.5 text-green-400" />
           ) : (
             <Copy className="w-3.5 h-3.5" />
           )}
-        </button>
+        </span>
       )}
     </span>
   );

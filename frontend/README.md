@@ -1,6 +1,6 @@
-# GenLayer Football Market
+# GenLayer DAO Intel
 
-Next.js frontend for GenLayer Football Market - AI-powered football match predictions on GenLayer blockchain.
+Next.js frontend for Snapshot DAO Intel on GenLayer: verifiable proposal evaluation, AI voting delegates, and treasury guards.
 
 ## Setup
 
@@ -22,9 +22,10 @@ cp .env.example .env
 ```
 
 3. Configure environment variables:
-   - `NEXT_PUBLIC_CONTRACT_ADDRESS` - GenLayer Football Betting contract address
-   - `NEXT_PUBLIC_GENLAYER_RPC_URL` - GenLayer RPC URL (defaults to `https://studio-next.genlayer.com/api`)
-   - `NEXT_PUBLIC_GENLAYER_CHAIN_ID` - RPC chain ID (defaults to `61997`)
+   - `NEXT_PUBLIC_EVALUATOR_ADDRESS` / `NEXT_PUBLIC_DELEGATE_ADDRESS` / `NEXT_PUBLIC_GUARD_ADDRESS` - the three deployed DAO stack addresses (see `lib/contracts/addresses.ts`)
+   - `NEXT_PUBLIC_GENLAYER_RPC_URL` - Studio Next RPC (MUST: `https://studio-next.genlayer.com/api`)
+   - `NEXT_PUBLIC_GENLAYER_CHAIN_ID` - RPC chain ID (MUST: `61997`)
+   - `NEXT_PUBLIC_GENLAYER_EXPLORER_URL` - block explorer (`https://explorer-studio-dev.genlayer.com/`)
    - `NEXT_PUBLIC_GENLAYER_CHAIN_NAME` - Network label shown to users
 
    Change the RPC URL and chain ID together. The same resolved network is used
@@ -76,10 +77,8 @@ disconnect preference. Private keys are never stored by the application.
 
 ## Features
 
-- **Create Bets**: Create football match predictions with team names, game date, and predicted winner (Team 1, Team 2, or Draw)
-- **View Bets**: Real-time bet table with match details, predictions, status, and owners
-- **Resolve Bets**: Bet owners can resolve matches using GenLayer's AI to verify actual results
-- **Leaderboard**: Track top players by points earned from correct predictions
-- **Player Stats**: View your points and ranking in the community
+- **Evaluate Proposals**: Score Snapshot proposals against the space charter via LLM consensus (APPROVE / REJECT / NEEDS_REVISION + spam flag)
+- **Delegate Votes**: Store a public voting policy and receive verifiable, reasoned recommendations
+- **Guard Treasury**: Propose GEN spends gated on APPROVE evaluations; owner releases on milestone completion
 - **Glass-morphism UI**: Premium dark theme with OKLCH colors, backdrop blur effects, and smooth animations
 - **Data Refresh**: TanStack Query refreshes contract data after completed transactions and when the window regains focus

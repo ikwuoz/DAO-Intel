@@ -1,8 +1,26 @@
 "use client";
 
+import Link from "next/link";
 import { Navbar } from "@/components/Navbar";
-import { BetsTable } from "@/components/BetsTable";
-import { Leaderboard } from "@/components/Leaderboard";
+import { Button } from "@/components/ui/button";
+
+const PHASES = [
+  {
+    step: "1. Evaluate Proposals",
+    title: "Proposal Evaluator",
+    text: "Snapshot proposals are scored by LLM consensus against the space charter: APPROVE, REJECT, or NEEDS_REVISION, with spam detection.",
+  },
+  {
+    step: "2. Delegate Votes",
+    title: "Voting Delegate",
+    text: "Members store a public voting policy and receive verifiable, reasoned recommendations. Votes are still cast with your own key.",
+  },
+  {
+    step: "3. Guard the Treasury",
+    title: "Treasury Guard",
+    text: "GEN disbursements require an APPROVE evaluation above threshold before release. Deterministic gating, no black-box spending.",
+  },
+];
 
 export default function HomePage() {
   return (
@@ -16,25 +34,21 @@ export default function HomePage() {
           {/* Hero Section */}
           <div className="text-center mb-8 animate-fade-in">
             <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold mb-4">
-              Football Prediction Betting
+              Snapshot DAO Intel
             </h1>
             <p className="text-lg md:text-xl text-muted-foreground max-w-2xl mx-auto">
-              AI-powered football match predictions on GenLayer blockchain.
+              Verifiable proposal evaluation, AI voting delegates, and treasury
+              guards on GenLayer blockchain.
               <br />
-              Create bets, make predictions, and compete for points.
+              Off-chain Snapshot voting, on-chain neutral judgment.
             </p>
-          </div>
-
-          {/* Main Grid Layout - 2/1 columns on desktop, stacked on mobile */}
-          <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 lg:gap-8">
-            {/* Left Column - Bets Table (67% on desktop) */}
-            <div className="lg:col-span-8 animate-slide-up">
-              <BetsTable />
-            </div>
-
-            {/* Right Column - Leaderboard (33% on desktop) */}
-            <div className="lg:col-span-4 animate-slide-up" style={{ animationDelay: "100ms" }}>
-              <Leaderboard />
+            <div className="flex items-center justify-center gap-3 mt-6">
+              <Link href="/evaluate">
+                <Button variant="gradient">Evaluate proposals</Button>
+              </Link>
+              <Link href="/treasury">
+                <Button variant="outline">Guard the treasury</Button>
+              </Link>
             </div>
           </div>
 
@@ -42,24 +56,13 @@ export default function HomePage() {
           <div className="mt-8 glass-card p-6 md:p-8 animate-fade-in" style={{ animationDelay: "200ms" }}>
             <h2 className="text-2xl font-bold mb-4">How it Works</h2>
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-              <div className="space-y-2">
-                <div className="text-accent font-bold text-lg">1. Create a Bet</div>
-                <p className="text-sm text-muted-foreground">
-                  Connect your wallet and create a football match prediction. Choose the teams, date, and your predicted winner.
-                </p>
-              </div>
-              <div className="space-y-2">
-                <div className="text-accent font-bold text-lg">2. Wait for Resolution</div>
-                <p className="text-sm text-muted-foreground">
-                  After the match, the bet creator resolves the bet. GenLayer's AI verifies the actual match result.
-                </p>
-              </div>
-              <div className="space-y-2">
-                <div className="text-accent font-bold text-lg">3. Earn Points</div>
-                <p className="text-sm text-muted-foreground">
-                  Correct predictions earn you points. Climb the leaderboard and prove your football knowledge!
-                </p>
-              </div>
+              {PHASES.map((phase) => (
+                <div key={phase.title} className="space-y-2">
+                  <div className="text-accent font-bold text-lg">{phase.step}</div>
+                  <div className="font-semibold">{phase.title}</div>
+                  <p className="text-sm text-muted-foreground">{phase.text}</p>
+                </div>
+              ))}
             </div>
           </div>
         </div>
@@ -84,6 +87,14 @@ export default function HomePage() {
                 className="hover:text-accent transition-colors"
               >
                 Studio
+              </a>
+              <a
+                href="https://explorer-studio-dev.genlayer.com/"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="hover:text-accent transition-colors"
+              >
+                Explorer
               </a>
               <a
                 href="https://docs.genlayer.com"

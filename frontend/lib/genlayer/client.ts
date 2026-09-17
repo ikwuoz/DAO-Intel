@@ -38,18 +38,6 @@ export function getStudioUrl(): string {
 }
 
 /**
- * Get the contract address from environment variables
- */
-export function getContractAddress(): string {
-  const address = process.env.NEXT_PUBLIC_CONTRACT_ADDRESS;
-  if (!address) {
-    // Return empty string during build, error will be shown in UI during runtime
-    return "";
-  }
-  return address;
-}
-
-/**
  * Check if MetaMask is installed
  */
 export function isMetaMaskInstalled(): boolean {
@@ -171,8 +159,16 @@ export async function switchToGenLayerNetwork(): Promise<void> {
       params: [{ chainId: GENLAYER_CHAIN_ID_HEX }],
     });
   } catch (error: any) {
-    // If the chain is not added, add it
-    if (error.code === 4902) {
+    // 4902 = chain not added. Some wallets reject unknown chains with a
+    // plain "unrecognized chain" error instead of 4902 — fall back to
+    // adding in either case.
+    const message = String(error?.message ?? "").toLowerCase();
+    const chainMissing =
+      error?.code === 4902 ||
+      message.includes("unrecognized chain") ||
+      message.includes("unknown chain") ||
+      message.includes("not recognized");
+    if (chainMissing) {
       await addGenLayerNetwork();
     } else if (error.code === 4001) {
       throw new Error("User rejected switching the network");
@@ -198,10 +194,46 @@ export async function isOnGenLayerNetwork(): Promise<boolean> {
 }
 
 /**
- * Connect to MetaMask and ensure we're on GenLayer network
- * @returns The connected address
+ * Result of ensuring the wallet is on the GenLayer network.
+ * - "already": wallet was already on GenLayer, no prompt shown.
+ * - "switched": wallet was elsewhere; user approved the switch/add.
+ * - "rejected": user dismissed the switch prompt; wallet stays connected
+ *   on the wrong network (never throws — connection must survive).
  */
-export async function connectMetaMask(): Promise<string> {
+export type NetworkEnsureResult = "already" | "switched" | "rejected";
+
+/**
+ * Ensure the wallet is on the GenLayer network, prompting only if needed.
+ * User rejection is a normal outcome ("rejected"), not an error — only
+ * real failures (no provider, RPC errors) throw.
+ */
+export async function ensureGenLayerNetwork(): Promise<NetworkEnsureResult> {
+  if (await isOnGenLayerNetwork()) {
+    return "already";
+  }
+
+  try {
+    await switchToGenLayerNetwork();
+  } catch (err: any) {
+    if (err.message?.includes("rejected")) {
+      return "rejected";
+    }
+    throw err;
+  }
+
+  return (await isOnGenLayerNetwork()) ? "switched" : "rejected";
+}
+
+/**
+ * Connect to MetaMask and auto-switch to the GenLayer network.
+ * A rejected network switch does NOT fail the connection — the caller
+ * gets `onCorrectNetwork: false` and can prompt again later.
+ */
+export async function connectMetaMask(): Promise<{
+  address: string;
+  onCorrectNetwork: boolean;
+  networkResult: NetworkEnsureResult;
+}> {
   if (!isMetaMaskInstalled()) {
     throw new Error("MetaMask is not installed");
   }
@@ -213,14 +245,11 @@ export async function connectMetaMask(): Promise<string> {
     throw new Error("No accounts found");
   }
 
-  // Check and switch to GenLayer network
+  // Auto-switch to GenLayer network (non-fatal if the user dismisses it)
+  const networkResult = await ensureGenLayerNetwork();
   const onCorrectNetwork = await isOnGenLayerNetwork();
 
-  if (!onCorrectNetwork) {
-    await switchToGenLayerNetwork();
-  }
-
-  return accounts[0];
+  return { address: accounts[0], onCorrectNetwork, networkResult };
 }
 
 /**
